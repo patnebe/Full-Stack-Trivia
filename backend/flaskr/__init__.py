@@ -1,4 +1,5 @@
 import os
+import sys
 from flask import Flask, request, abort, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import load_only
@@ -8,6 +9,17 @@ import random
 from models import setup_db, Question, Category, db
 
 QUESTIONS_PER_PAGE = 10
+
+
+def get_categories():
+    categories = db.session.query(Category.type).all()
+
+    list_of_categories = []
+
+    for category in categories:
+        list_of_categories.append(category[0])
+
+    return list_of_categories
 
 
 def create_app(test_config=None):
@@ -37,42 +49,27 @@ def create_app(test_config=None):
     for all available categories.
     """
 
-    @app.route('/')
-    def homepage():
-        return jsonify({"message": "Hello"})
-
     @app.route('/v1/categories')
     def get_available_categories():
-        response_object = {
-            "success": False
-        }
-
         try:
-            fields = ['type']
+            list_of_categories = get_categories()
 
-            categories = db.session.query(Category.type).all()
+            response_object = {
+                "success": True,
+                "categories": list_of_categories,
+                "number_of_categories": len(list_of_categories)
+            }
 
-            list_of_categories = []
-
-            for category in categories:
-                list_of_categories.append(category[0])
-
-            response_object['categories'] = list_of_categories
-
-            response_object['success'] = True
-
+            return jsonify(response_object)
             # Format this data in the right form
 
         except:
             print(sys.exc_info())
             db.session.rollback()
-
-            # response_object['error_message'] = 'Something went wrong and we were unable to process your request.'
             abort(500)
 
         finally:
             db.session.close()
-            return jsonify(response_object)
 
     """
     @TODO: 
@@ -88,8 +85,43 @@ def create_app(test_config=None):
     """
 
     @app.route('/v1/questions')
-    def get_questions():
-        pass
+    def get_all_questions():
+        def get_paginated_questions():
+            start = request.args.get('page', 1, type=int)
+
+            questions = Question.query.paginate(
+                start, QUESTIONS_PER_PAGE, False).items
+
+            return questions
+
+        try:
+            questions = get_paginated_questions()
+
+            list_of_formatted_questions = []
+
+            if len(questions) == 0:
+                return not_found(404)
+
+            for question in questions:
+                list_of_formatted_questions.append(question.format())
+            list_of_formatted_questions
+
+            response_object = {
+                "success": True,
+                "questions": list_of_formatted_questions,
+                "total_questions": len(list_of_formatted_questions),
+                "categories": get_categories(),
+                "current_category": None
+            }
+
+            return jsonify(response_object)
+
+        except:
+            print(sys.exc_info())
+            abort(500)
+
+        finally:
+            db.session.rollback()
 
     """
     @TODO: 
@@ -189,7 +221,7 @@ def create_app(test_config=None):
     def internal_serval_error(error):
         return jsonify({
             "error": 500,
-            "message": "Something went wrong the server.",
+            "message": "Something went wrong on the server.",
             "success": False
         })
         pass
