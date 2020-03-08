@@ -14,8 +14,11 @@ class TriviaTestCase(unittest.TestCase):
         """Define test variables and initialize app."""
         self.app = create_app()
         self.client = self.app.test_client
+        self.username = os.getenv('TRIVIA_USERNAME')
+        self.password = os.getenv('PASSWORD')
         self.database_name = "trivia_test"
-        self.database_path = "postgres://{}/{}".format('localhost:5432', self.database_name)
+        self.database_path = "postgresql://{}:{}@{}/{}".format(
+            self.username, self.password, 'localhost:5432', self.database_name)
         setup_db(self.app, self.database_path)
 
         # binds the app to the current context
@@ -24,10 +27,102 @@ class TriviaTestCase(unittest.TestCase):
             self.db.init_app(self.app)
             # create all tables
             self.db.create_all()
-    
+
     def tearDown(self):
         """Executed after reach test"""
         pass
+
+    def test_success_get_categories(self):
+        """A get request to the /v1/categories endpoint should return all available categories"""
+
+        endpoint = '/v1/categories'
+        response_object = self.client().get(endpoint)
+        response_data = json.loads(response_object.get_data())
+
+        self.assertEqual(response_object.status_code, 200)
+        self.assertTrue(response_data['success'])
+        self.assertTrue(response_data['categories'])
+        self.assertTrue(response_data['number_of_categories'])
+        self.assertEqual(type(response_data['categories']), list)
+        self.assertEqual(type(response_data['number_of_categories']), int)
+
+    def test_success_get_paginated_questions(self):
+        """A get request to the /v1/questions endpoint should return a list of questions, number of total questions, current category, categories."""
+
+        endpoint = '/v1/questions'
+        response_object = self.client().get(endpoint)
+        response_data = json.loads(response_object.get_data())
+
+        self.assertEqual(response_object.status_code, 200)
+        self.assertTrue(response_data['success'])
+
+        self.assertTrue(response_data['questions'])
+        self.assertEqual(type(response_data['questions']), list)
+
+        self.assertTrue(response_data['total_questions'])
+        self.assertEqual(type(response_data['total_questions']), int)
+
+        self.assertTrue(response_data['categories'])
+        self.assertEqual(type(response_data['categories']), list)
+        pass
+
+    def test_404_get_paginated_questions(self):
+        """A request for a non existent question should return a 404"""
+
+        endpoint = '/v1/questions?page=10000'
+        response_object = self.client().get(endpoint)
+        response_data = json.loads(response_object.get_data())
+
+        self.assertEqual(response_object.status_code, 404)
+        pass
+
+    # def test_success_delete_question_based_on_id(self):
+    #     """"""
+    #     question_id = 2
+    #     endpoint = f"/v1/questions/{question_id}"
+
+    #     response_object = self.client().get(endpoint)
+    #     response_data = json.loads(response_object.get_data())
+
+    #     # Assertions
+    #     pass
+
+    # def test_404_delete_non_existent_question(self):
+    #     """"""
+    #     question_id = 999999
+    #     endpoint = f"/v1/questions/{question_id}"
+
+    #     response_object = self.client().get(endpoint)
+    #     response_data = json.loads(response_object.get_data())
+    #     pass
+
+    # def test_success_post_new_question(self):
+    #     """"""
+
+    #     response_object = self.client().get('')
+    #     response_data = json.loads(response_object.get_data())
+    #     pass
+
+    # def test_success_get_questions_based_on_category(self):
+    #     """"""
+
+    #     response_object = self.client().get('')
+    #     response_data = json.loads(response_object.get_data())
+    #     pass
+
+    # def test_success_get_questions_based_on_search_term(self):
+    #     """"""
+
+    #     response_object = self.client().get('')
+    #     response_data = json.loads(response_object.get_data())
+    #     pass
+
+    # def test_success_get_questions_to_play_quiz(self):
+    #     """"""
+
+    #     response_object = self.client().get('')
+    #     response_data = json.loads(response_object.get_data())
+    #     pass
 
     """
     TODO
