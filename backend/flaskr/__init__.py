@@ -133,6 +133,7 @@ def create_app(test_config=None):
 
     @app.route('/v1/questions/<int:question_id>', methods=['DELETE'])
     def delete_question(question_id):
+        
         pass
 
     """
@@ -160,7 +161,7 @@ def create_app(test_config=None):
     only question that include that string within their question. 
     Try using the word "title" to start. 
     """
-    @app.route('/v1/search-questions', methods=['POST'])
+    @app.route('/v1/questions/search', methods=['POST'])
     def search_questions():
         pass
 
@@ -187,6 +188,10 @@ def create_app(test_config=None):
     one question at a time is displayed, the user is allowed to answer
     and shown whether they were correct or not. 
     """
+    @app.route('/v1/quizzes', methods=['POST'])
+    def get_questions_for_quiz():
+        # get required details in JSON format
+        pass
 
     """
     @TODO: 

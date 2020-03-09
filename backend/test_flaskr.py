@@ -76,25 +76,31 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(response_object.status_code, 404)
         pass
 
-    # def test_success_delete_question_based_on_id(self):
-    #     """"""
-    #     question_id = 2
-    #     endpoint = f"/v1/questions/{question_id}"
+    def test_success_delete_question_based_on_id(self):
+        """A request to delete a given question with the specified id should return a 200 status code and should delete the question from the database"""
 
-    #     response_object = self.client().get(endpoint)
-    #     response_data = json.loads(response_object.get_data())
+        question_id = 2
+        endpoint = f"/v1/questions/{question_id}"
 
-    #     # Assertions
-    #     pass
+        response_object = self.client().delete(endpoint)
+        response_data = json.loads(response_object.get_data())
 
-    # def test_404_delete_non_existent_question(self):
-    #     """"""
-    #     question_id = 999999
-    #     endpoint = f"/v1/questions/{question_id}"
+        same_question_gotten_from_db = Question.query.get(question_id)
 
-    #     response_object = self.client().get(endpoint)
-    #     response_data = json.loads(response_object.get_data())
-    #     pass
+        self.assertEqual(response_object.status_code, 200)
+        self.assertEqual(same_question_gotten_from_db, None)
+        pass
+
+    def test_404_delete_non_existent_question(self):
+        """A request to delete a question with a non-existent id should return a 404 status code"""
+        question_id = 999999
+        endpoint = f"/v1/questions/{question_id}"
+
+        response_object = self.client().delete(endpoint)
+        response_data = json.loads(response_object.get_data())
+
+        self.assertEqual(response_object.status_code, 404)
+        pass
 
     # def test_success_post_new_question(self):
     #     """"""
