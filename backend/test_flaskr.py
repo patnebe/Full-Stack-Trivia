@@ -32,6 +32,11 @@ class TriviaTestCase(unittest.TestCase):
         """Executed after reach test"""
         pass
 
+    """
+    TODO
+    Write at least one test for each test for successful operation and for expected errors.
+    """
+
     def test_success_get_categories(self):
         """A get request to the /v1/categories endpoint should return all available categories"""
 
@@ -102,38 +107,117 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(response_object.status_code, 404)
         pass
 
-    # def test_success_post_new_question(self):
-    #     """"""
+    def test_success_post_new_question(self):
+        """A request to post a new question with all required parameters should return a 200 status code"""
 
-    #     response_object = self.client().get('')
-    #     response_data = json.loads(response_object.get_data())
-    #     pass
+        endpoint = '/v1/questions'
+        payload = {"question": "'What was Cassius Clay known as?'", "answer": "Muhammad Ali",
+                   "category": 1, "difficulty": 4}
 
-    # def test_success_get_questions_based_on_category(self):
-    #     """"""
+        response_object = self.client().post(endpoint, json=payload)
+        response_data = json.loads(response_object.get_data())
 
-    #     response_object = self.client().get('')
-    #     response_data = json.loads(response_object.get_data())
-    #     pass
+        self.assertEqual(response_object.status_code, 200)
+        pass
 
-    # def test_success_get_questions_based_on_search_term(self):
-    #     """"""
+    def test_400_failure_post_new_question(self):
+        """A request to post a new question with an incomplete payload should return a 400 status code"""
 
-    #     response_object = self.client().get('')
-    #     response_data = json.loads(response_object.get_data())
-    #     pass
+        endpoint = '/v1/questions'
+        payload = {"question": "", "answer": "",
+                   "category": None}
 
-    # def test_success_get_questions_to_play_quiz(self):
-    #     """"""
+        response_object = self.client().post(endpoint, json=payload)
+        response_data = json.loads(response_object.get_data())
 
-    #     response_object = self.client().get('')
-    #     response_data = json.loads(response_object.get_data())
-    #     pass
+        self.assertEqual(response_object.status_code, 400)
+        pass
 
-    """
-    TODO
-    Write at least one test for each test for successful operation and for expected errors.
-    """
+    def test_success_get_questions_based_on_category(self):
+        """A request to this endpoint should return only questions which fall within the specified category. 
+
+        This test will be done for all categories and should take O(nm) time where n is the number of categories and m is the number of questions for a given category.
+
+        As the number of questions grow this test might need to be refactored to reduced its time complexity."""
+
+        categories = Category.query.all()
+        list_of_categories = [category.format() for category in categories]
+
+        for item in list_of_categories:
+            category_id = item['id']
+            category_name = item['type']
+
+            endpoint = f"/v1/categories/{category_id}/questions"
+
+            response_object = self.client().get(endpoint)
+            response_data = json.loads(response_object.get_data())
+
+            self.assertEqual(response_object.status_code, 200)
+
+            self.assertTrue(response_data['category'])
+            self.assertEqual(response_data['category'], category_name)
+
+            self.assertTrue(response_data['success'])
+
+            self.assertTrue(response_data['questions'])
+            self.assertEqual(type(response_data['questions']), list)
+
+            returned_questions = response_data['questions']
+
+            for question in returned_questions:
+                self.assertEqual(question['category'], category_name)
+
+            self.assertTrue(response_data['total_questions'])
+            self.assertEqual(type(response_data['total_questions']), int)
+
+        pass
+
+    def test_404_get_questions_based_on_category(self):
+        """A request to get questions from a non-existent category should return a 404"""
+
+        category_id = 9999
+        endpoint = f"/v1/categories/{category_id}/questions"
+
+        response_object = self.client().get(endpoint)
+        response_data = json.loads(response_object.get_data())
+
+        self.assertEqual(response_object.status_code, 404)
+        pass
+
+    # Complete the three tests below
+    def test_success_get_questions_based_on_search_term(self):
+        """A request to get questions by search term should return all questions which contain the search term as a substring in a case-insensitive manner"""
+
+        # search for question in db,
+        # ensure that the number of questions from the db match the number of questions in returned by the
+
+        response_object = self.client().get()
+        response_data = json.loads(response_object.get_data())
+
+        pass
+
+    def test_404get_questions_based_on_search_term(self):
+        """A request to get questions by search term should return 404 if there is no string which contains the search term as a substring"""
+
+        response_object = self.client().get()
+        response_data = json.loads(response_object.get_data())
+        pass
+
+    def test_success_get_questions_to_play_quiz(self):
+        """"""
+        payload = {}
+
+        response_object = self.client().post('', json=payload)
+        response_data = json.loads(response_object.get_data())
+
+        self.assertEqual(response_object.status_code, 200)
+
+        if type(response_data['question']) is dict:
+            self.assertTrue(response_data['question'])
+            self.assertTrue(response_data['answer'])
+            self.assertTrue(response_data['category'])
+            self.assertTrue(response_data['difficulty'])
+        pass
 
 
 # Make the tests conveniently executable

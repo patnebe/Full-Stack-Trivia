@@ -133,7 +133,7 @@ def create_app(test_config=None):
 
     @app.route('/v1/questions/<int:question_id>', methods=['DELETE'])
     def delete_question(question_id):
-        
+
         pass
 
     """
@@ -173,7 +173,7 @@ def create_app(test_config=None):
     categories in the left column will cause only questions of that 
     category to be shown. 
     """
-    @app.route('/v1/categories/<int:category_id>')
+    @app.route('/v1/categories/<int:category_id>/questions')
     def get_questions_by_category(category_id):
         pass
 
