@@ -163,6 +163,8 @@ def create_app(test_config=None):
     """
     @app.route('/v1/questions/search', methods=['POST'])
     def search_questions():
+        # search_results = Question.query.filter(Question.question.ilike(f"%{search_query}%"))
+        # list_of_search_results = [question.format() for question in search_results]
         pass
 
     """

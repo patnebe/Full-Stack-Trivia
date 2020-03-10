@@ -1,8 +1,8 @@
 import os
 import unittest
 import json
+import random
 from flask_sqlalchemy import SQLAlchemy
-
 from flaskr import create_app
 from models import setup_db, Question, Category
 
@@ -31,11 +31,6 @@ class TriviaTestCase(unittest.TestCase):
     def tearDown(self):
         """Executed after reach test"""
         pass
-
-    """
-    TODO
-    Write at least one test for each test for successful operation and for expected errors.
-    """
 
     def test_success_get_categories(self):
         """A get request to the /v1/categories endpoint should return all available categories"""
@@ -184,39 +179,98 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(response_object.status_code, 404)
         pass
 
-    # Complete the three tests below
     def test_success_get_questions_based_on_search_term(self):
         """A request to get questions by search term should return all questions which contain the search term as a substring in a case-insensitive manner"""
 
-        # search for question in db,
-        # ensure that the number of questions from the db match the number of questions in returned by the
+        search_query = ""
 
-        response_object = self.client().get()
+        # construct search query from the first item in the database
+        first_question = Question.query.first()
+
+        # Checking for null values in the unlikely event that the database is empty
+        if first_question is not None:
+            first_question = first_question.format()['question']
+            words_in_first_question = first_question.split()
+            no_of_words = len(words_in_first_question)
+            search_query = words_in_first_question[random.randint(
+                0, no_of_words-1)]
+
+        payload = {"searchTerm": search_query}
+        endpoint = "/v1/questions/search"
+
+        # make a search request to the endpoint
+        response_object = self.client().post(endpoint, json=payload)
         response_data = json.loads(response_object.get_data())
 
+        self.assertTrue(response_data['questions'])
+        self.assertEqual(type(response_data['questions']), list)
+        self.assertEqual(response_object.status_code, 200)
         pass
 
-    def test_404get_questions_based_on_search_term(self):
+    def test_404_get_questions_based_on_search_term(self):
         """A request to get questions by search term should return 404 if there is no string which contains the search term as a substring"""
 
-        response_object = self.client().get()
-        response_data = json.loads(response_object.get_data())
+        search_query = "iswlxxzcsrcgracazczl"
+        payload = {"searchTerm": search_query}
+        endpoint = "/v1/questions/search"
+
+        response_object = self.client().post(endpoint, json=payload)
+
+        self.assertEqual(response_object.status_code, 404)
         pass
 
     def test_success_get_questions_to_play_quiz(self):
-        """"""
-        payload = {}
+        """A request to get the next question in the quiz should a return a random question, within the given category, which is not within the list of previous question"""
 
-        response_object = self.client().post('', json=payload)
+        # get a random category for the list of categories within the database
+        categories = Category.query.all()
+        list_of_categories = [category.format() for category in categories]
+        no_of_categories = len(list_of_categories)
+
+        category = list_of_categories[random.randint(
+            0, no_of_categories-1)]['id']
+
+        # create a list of previous questions from the given category
+        query_result = Question.query.filter(
+            Question.category == category).limit(5).all()
+        list_of_previous_questions = [
+            question.format()['question'] for question in query_result]
+
+        payload = {"previous_questions": list_of_previous_questions,
+                   "quiz_category": category}
+
+        endpoint = '/v1/quizzes'
+
+        response_object = self.client().post(endpoint, json=payload)
         response_data = json.loads(response_object.get_data())
 
         self.assertEqual(response_object.status_code, 200)
 
-        if type(response_data['question']) is dict:
-            self.assertTrue(response_data['question'])
-            self.assertTrue(response_data['answer'])
-            self.assertTrue(response_data['category'])
-            self.assertTrue(response_data['difficulty'])
+        question_from_endpoint = response_data['question']
+        if type(question_from_endpoint) is dict:
+            self.assertTrue(question_from_endpoint['question'])
+            self.assertTrue(question_from_endpoint['answer'])
+            self.assertTrue(question_from_endpoint['category'])
+            self.assertTrue(question_from_endpoint['difficulty'])
+
+            # make sure that the question returned is not in the list of previous questions
+            for question in list_of_previous_questions:
+                self.assertNotEqual(
+                    question, question_from_endpoint['question'])
+        pass
+
+    def test_400_failure_get_questions_to_play_quiz(self):
+        """A request to get the next question in the quiz should a return a 400 error if the parameters if the request payload is incomplete or wrongly formatted"""
+
+        payload = {"previous_questions": [],
+                   "quiz_category": "category"}
+
+        endpoint = '/v1/quizzes'
+
+        response_object = self.client().post(endpoint, json=payload)
+        response_data = json.loads(response_object.get_data())
+
+        self.assertEqual(response_object.status_code, 400)
         pass
 
 
