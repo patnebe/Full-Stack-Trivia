@@ -134,6 +134,29 @@ def create_app(test_config=None):
     @app.route('/v1/questions/<int:question_id>', methods=['DELETE'])
     def delete_question(question_id):
 
+        try:
+            question_to_be_deleted = Question.query.get(question_id)
+
+            if question_to_be_deleted is None:
+                return not_found(404)
+
+            db.session.delete(question_to_be_deleted)
+            db.session.commit()
+
+            response_object = {
+                "success": True,
+                "message": f"The question with ID: {question_id} was successfully deleted."
+            }
+
+            return jsonify(response_object)
+
+        except:
+            db.session.rollback()
+            print(sys.exc_info())
+
+        finally:
+            db.session.close()
+
         pass
 
     """
@@ -146,54 +169,53 @@ def create_app(test_config=None):
     the form will clear and the question will appear at the end of the last page
     of the questions list in the "List" tab. 
     """
-    @app.route('/v1/questions', methods=['POST'])
-    def post_new_question():
-        pass
+    # @app.route('/v1/questions', methods=['POST'])
+    # def post_new_question():
+    #     pass
 
-    """
-    @TODO: 
-    Create a POST endpoint to get questions based on a search term. 
-    It should return any questions for whom the search term 
-    is a substring of the question. 
-    
+    # """
+    # @TODO:
+    # Create a POST endpoint to get questions based on a search term.
+    # It should return any questions for whom the search term
+    # is a substring of the question.
 
-    TEST: Search by any phrase. The questions list will update to include 
-    only question that include that string within their question. 
-    Try using the word "title" to start. 
-    """
-    @app.route('/v1/questions/search', methods=['POST'])
-    def search_questions():
-        # search_results = Question.query.filter(Question.question.ilike(f"%{search_query}%"))
-        # list_of_search_results = [question.format() for question in search_results]
-        pass
+    # TEST: Search by any phrase. The questions list will update to include
+    # only question that include that string within their question.
+    # Try using the word "title" to start.
+    # """
+    # @app.route('/v1/questions/search', methods=['POST'])
+    # def search_questions():
+    #     # search_results = Question.query.filter(Question.question.ilike(f"%{search_query}%"))
+    #     # list_of_search_results = [question.format() for question in search_results]
+    #     pass
 
-    """
-    @TODO: 
-    Create a GET endpoint to get questions based on category. 
+    # """
+    # @TODO:
+    # Create a GET endpoint to get questions based on category.
 
-    TEST: In the "List" tab / main screen, clicking on one of the 
-    categories in the left column will cause only questions of that 
-    category to be shown. 
-    """
-    @app.route('/v1/categories/<int:category_id>/questions')
-    def get_questions_by_category(category_id):
-        pass
+    # TEST: In the "List" tab / main screen, clicking on one of the
+    # categories in the left column will cause only questions of that
+    # category to be shown.
+    # """
+    # @app.route('/v1/categories/<int:category_id>/questions')
+    # def get_questions_by_category(category_id):
+    #     pass
 
-    """
-    @TODO: 
-    Create a POST endpoint to get questions to play the quiz. 
-    This endpoint should take category and previous question parameters 
-    and return a random questions within the given category, 
-    if provided, and that is not one of the previous questions. 
+    # """
+    # @TODO:
+    # Create a POST endpoint to get questions to play the quiz.
+    # This endpoint should take category and previous question parameters
+    # and return a random questions within the given category,
+    # if provided, and that is not one of the previous questions.
 
-    TEST: In the "Play" tab, after a user selects "All" or a category,
-    one question at a time is displayed, the user is allowed to answer
-    and shown whether they were correct or not. 
-    """
-    @app.route('/v1/quizzes', methods=['POST'])
-    def get_questions_for_quiz():
-        # get required details in JSON format
-        pass
+    # TEST: In the "Play" tab, after a user selects "All" or a category,
+    # one question at a time is displayed, the user is allowed to answer
+    # and shown whether they were correct or not.
+    # """
+    # @app.route('/v1/quizzes', methods=['POST'])
+    # def get_questions_for_quiz():
+    #     # get required details in JSON format
+    #     pass
 
     """
     @TODO: 

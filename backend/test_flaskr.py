@@ -79,7 +79,7 @@ class TriviaTestCase(unittest.TestCase):
     def test_success_delete_question_based_on_id(self):
         """A request to delete a given question with the specified id should return a 200 status code and should delete the question from the database"""
 
-        question_id = 2
+        question_id = Question.query.first().format()['id']
         endpoint = f"/v1/questions/{question_id}"
 
         response_object = self.client().delete(endpoint)
