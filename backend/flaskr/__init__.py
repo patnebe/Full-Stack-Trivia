@@ -8,6 +8,8 @@ import random
 
 from models import setup_db, Question, Category, db
 
+from marshmallow import Schema, fields, ValidationError
+
 QUESTIONS_PER_PAGE = 10
 
 
@@ -20,6 +22,13 @@ def get_categories():
         list_of_categories.append(category[0])
 
     return list_of_categories
+
+
+class question_schema(Schema):
+    question = fields.String()
+    answer = fields.String()
+    category = fields.Int()
+    difficulty = fields.Int()
 
 
 def create_app(test_config=None):
@@ -118,10 +127,11 @@ def create_app(test_config=None):
 
         except:
             print(sys.exc_info())
+            db.session.rollback()
             abort(500)
 
         finally:
-            db.session.rollback()
+            db.session.close()
 
     """
     @TODO: 
@@ -151,13 +161,12 @@ def create_app(test_config=None):
             return jsonify(response_object)
 
         except:
-            db.session.rollback()
             print(sys.exc_info())
+            db.session.rollback()
+            abort(500)
 
         finally:
             db.session.close()
-
-        pass
 
     """
     @TODO: 
@@ -169,25 +178,85 @@ def create_app(test_config=None):
     the form will clear and the question will appear at the end of the last page
     of the questions list in the "List" tab. 
     """
-    # @app.route('/v1/questions', methods=['POST'])
-    # def post_new_question():
-    #     pass
+    @app.route('/v1/questions', methods=['POST'])
+    def post_new_question():
 
-    # """
-    # @TODO:
-    # Create a POST endpoint to get questions based on a search term.
-    # It should return any questions for whom the search term
-    # is a substring of the question.
+        try:
+            request_payload = request.get_json()
+            # This next line validates the the properties of the JSON input and raises a ValidationError exception if the input data is not properly formatted.
+            input_is_valid = question_schema().load(request_payload)
 
-    # TEST: Search by any phrase. The questions list will update to include
-    # only question that include that string within their question.
-    # Try using the word "title" to start.
-    # """
-    # @app.route('/v1/questions/search', methods=['POST'])
-    # def search_questions():
-    #     # search_results = Question.query.filter(Question.question.ilike(f"%{search_query}%"))
-    #     # list_of_search_results = [question.format() for question in search_results]
-    #     pass
+            question = request_payload['question']
+            answer = request_payload['answer']
+            category = request_payload['category']
+            difficulty = request_payload['difficulty']
+
+            question_to_be_inserted = Question(
+                question=question, answer=answer, category=category, difficulty=difficulty)
+
+            db.session.add(question_to_be_inserted)
+            db.session.commit()
+
+            response_object = {
+                "success": True,
+                "message": f"The question: {question} has been stored in the database."
+            }
+
+            return jsonify(response_object)
+
+        except ValidationError as err:
+            print(err.messages)
+            return bad_request(404)
+
+        except:
+            print(sys.exc_info())
+            db.session.rollback()
+            abort(500)
+
+        finally:
+            db.session.close()
+
+    """
+    @TODO:
+    Create a POST endpoint to get questions based on a search term.
+    It should return any questions for whom the search term
+    is a substring of the question.
+
+    TEST: Search by any phrase. The questions list will update to include
+    only question that include that string within their question.
+    Try using the word "title" to start.
+    """
+    @app.route('/v1/questions/search', methods=['POST'])
+    def search_questions():
+        try:
+            request_payload = request.get_json()
+            search_query = request_payload['searchTerm']
+
+            search_results = Question.query.filter(
+                Question.question.ilike(f"%{search_query}%")).all()
+
+            if len(search_results) is 0:
+                return not_found(404)
+
+            list_of_search_results = [question.format()
+                                      for question in search_results]
+
+            response_object = {
+                "success": True,
+                "questions": list_of_search_results,
+                "current_category": None,
+                "total_questions": len(list_of_search_results)
+            }
+
+            return jsonify(response_object)
+
+        except:
+            db.session.rollback()
+            print(sys.exc_info())
+            abort(500)
+
+        finally:
+            db.session.close()
 
     # """
     # @TODO:
@@ -199,10 +268,27 @@ def create_app(test_config=None):
     # """
     # @app.route('/v1/categories/<int:category_id>/questions')
     # def get_questions_by_category(category_id):
+    #     try:
+    #         # Filter queries by categories
+    #         requested_questions = Question.query.filter(Question.category==category_id).all()
+
+    #         response_object = {
+    #             "success": True,
+
+    #         }
+
+    #     except:
+    #         print(sys.exc_info())
+    #         db.session.rollback()
+    #         abort(500)
+
+    #     finally:
+    #         db.session.close()
+
     #     pass
 
-    # """
-    # @TODO:
+    # # """
+    # # @TODO:
     # Create a POST endpoint to get questions to play the quiz.
     # This endpoint should take category and previous question parameters
     # and return a random questions within the given category,
