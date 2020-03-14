@@ -70,7 +70,6 @@ def create_app(test_config=None):
             }
 
             return jsonify(response_object)
-            # Format this data in the right form
 
         except:
             print(sys.exc_info())
@@ -258,34 +257,46 @@ def create_app(test_config=None):
         finally:
             db.session.close()
 
-    # """
-    # @TODO:
-    # Create a GET endpoint to get questions based on category.
+    """
+    @TODO:
+    Create a GET endpoint to get questions based on category.
 
-    # TEST: In the "List" tab / main screen, clicking on one of the
-    # categories in the left column will cause only questions of that
-    # category to be shown.
-    # """
-    # @app.route('/v1/categories/<int:category_id>/questions')
-    # def get_questions_by_category(category_id):
-    #     try:
-    #         # Filter queries by categories
-    #         requested_questions = Question.query.filter(Question.category==category_id).all()
+    TEST: In the "List" tab / main screen, clicking on one of the
+    categories in the left column will cause only questions of that
+    category to be shown.
+    """
+    @app.route('/v1/categories/<int:category_id>/questions')
+    def get_questions_by_category(category_id):
+        try:
+            current_category = Category.query.get(category_id)
 
-    #         response_object = {
-    #             "success": True,
+            if current_category is None:
+                return not_found(404)
 
-    #         }
+            current_category = current_category.format()
 
-    #     except:
-    #         print(sys.exc_info())
-    #         db.session.rollback()
-    #         abort(500)
+            relevant_questions = Question.query.filter(
+                Question.category == category_id).all()
 
-    #     finally:
-    #         db.session.close()
+            questions_for_currrent_category = [
+                question.format() for question in relevant_questions]
 
-    #     pass
+            response_object = {
+                "success": True,
+                "questions": questions_for_currrent_category,
+                "total_questions": len(questions_for_currrent_category),
+                "current_category": current_category['type']
+            }
+
+            return jsonify(response_object)
+
+        except:
+            print(sys.exc_info())
+            db.session.rollback()
+            abort(500)
+
+        finally:
+            db.session.close()
 
     # # """
     # # @TODO:
