@@ -41,8 +41,6 @@ class TriviaTestCase(unittest.TestCase):
 
         self.assertEqual(response_object.status_code, 200)
         self.assertTrue(response_data['success'])
-        self.assertTrue(response_data['categories'])
-        self.assertTrue(response_data['number_of_categories'])
         self.assertEqual(type(response_data['categories']), list)
         self.assertEqual(type(response_data['number_of_categories']), int)
 
@@ -56,13 +54,10 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(response_object.status_code, 200)
         self.assertTrue(response_data['success'])
 
-        self.assertTrue(response_data['questions'])
         self.assertEqual(type(response_data['questions']), list)
 
-        self.assertTrue(response_data['total_questions'])
         self.assertEqual(type(response_data['total_questions']), int)
 
-        self.assertTrue(response_data['categories'])
         self.assertEqual(type(response_data['categories']), list)
         pass
 
@@ -149,20 +144,17 @@ class TriviaTestCase(unittest.TestCase):
 
             self.assertEqual(response_object.status_code, 200)
 
-            self.assertTrue(response_data['category'])
-            self.assertEqual(response_data['category'], category_name)
+            self.assertEqual(response_data['current_category'], category_name)
 
             self.assertTrue(response_data['success'])
 
-            self.assertTrue(response_data['questions'])
             self.assertEqual(type(response_data['questions']), list)
 
             returned_questions = response_data['questions']
 
             for question in returned_questions:
-                self.assertEqual(question['category'], category_name)
+                self.assertEqual(question['category'], category_id)
 
-            self.assertTrue(response_data['total_questions'])
             self.assertEqual(type(response_data['total_questions']), int)
 
         pass
@@ -202,7 +194,6 @@ class TriviaTestCase(unittest.TestCase):
         response_object = self.client().post(endpoint, json=payload)
         response_data = json.loads(response_object.get_data())
 
-        self.assertTrue(response_data['questions'])
         self.assertEqual(type(response_data['questions']), list)
         self.assertEqual(response_object.status_code, 200)
         pass
@@ -247,12 +238,10 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(response_object.status_code, 200)
 
         question_from_endpoint = response_data['question']
-        if type(question_from_endpoint) is dict:
-            self.assertTrue(question_from_endpoint['question'])
-            self.assertTrue(question_from_endpoint['answer'])
-            self.assertTrue(question_from_endpoint['category'])
-            self.assertTrue(question_from_endpoint['difficulty'])
 
+        self.assertEqual(type(question_from_endpoint), dict)
+
+        if type(question_from_endpoint) is dict:
             # make sure that the question returned is not in the list of previous questions
             for question in list_of_previous_questions:
                 self.assertNotEqual(
