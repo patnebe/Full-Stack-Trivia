@@ -124,7 +124,7 @@ class TriviaTestCase(unittest.TestCase):
         pass
 
     def test_success_get_questions_based_on_category(self):
-        """A request to this endpoint should return only questions which fall within the specified category. 
+        """A request to this endpoint should return only questions which fall within the specified category.
 
         This test will be done for all categories and should take O(nm) time where n is the number of categories and m is the number of questions for a given category.
 
@@ -223,7 +223,8 @@ class TriviaTestCase(unittest.TestCase):
 
         # create a list of previous questions from the given category
         query_result = Question.query.filter(
-            Question.category == category).limit(5).all()
+            Question.category == category).limit(3).all()
+
         list_of_previous_questions = [
             question.format()['question'] for question in query_result]
 
@@ -239,13 +240,15 @@ class TriviaTestCase(unittest.TestCase):
 
         question_from_endpoint = response_data['question']
 
-        self.assertEqual(type(question_from_endpoint), dict)
-
         if type(question_from_endpoint) is dict:
             # make sure that the question returned is not in the list of previous questions
+            # also make sure that it falls within the right category
             for question in list_of_previous_questions:
                 self.assertNotEqual(
                     question, question_from_endpoint['question'])
+
+            self.assertEqual(category, question_from_endpoint['category'])
+
         pass
 
     def test_400_failure_get_questions_to_play_quiz(self):

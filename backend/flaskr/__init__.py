@@ -31,6 +31,11 @@ class question_schema(Schema):
     difficulty = fields.Int()
 
 
+class quiz_request_schema(Schema):
+    previous_questions = fields.List(fields.String())
+    quiz_category = fields.Int()
+
+
 def create_app(test_config=None):
     # create and configure the app
     app = Flask(__name__)
@@ -179,7 +184,6 @@ def create_app(test_config=None):
     """
     @app.route('/v1/questions', methods=['POST'])
     def post_new_question():
-
         try:
             request_payload = request.get_json()
             # This next line validates the the properties of the JSON input and raises a ValidationError exception if the input data is not properly formatted.
@@ -298,21 +302,65 @@ def create_app(test_config=None):
         finally:
             db.session.close()
 
-    # # """
-    # # @TODO:
-    # Create a POST endpoint to get questions to play the quiz.
-    # This endpoint should take category and previous question parameters
-    # and return a random questions within the given category,
-    # if provided, and that is not one of the previous questions.
+    """
+    @TODO:
+    Create a POST endpoint to get questions to play the quiz.
+    This endpoint should take category and previous question parameters
+    and return a random questions within the given category,
+    if provided, and that is not one of the previous questions.
 
-    # TEST: In the "Play" tab, after a user selects "All" or a category,
-    # one question at a time is displayed, the user is allowed to answer
-    # and shown whether they were correct or not.
-    # """
-    # @app.route('/v1/quizzes', methods=['POST'])
-    # def get_questions_for_quiz():
-    #     # get required details in JSON format
-    #     pass
+    TEST: In the "Play" tab, after a user selects "All" or a category,
+    one question at a time is displayed, the user is allowed to answer
+    and shown whether they were correct or not.
+    """
+    @app.route('/v1/quizzes', methods=['POST'])
+    def get_questions_for_quiz():
+        try:
+            request_payload = request.get_json()
+            input_is_valid = quiz_request_schema().load(request_payload)
+
+            previous_questions = request_payload['previous_questions']
+            quiz_category = request_payload['quiz_category']
+
+            # find out how to exclude queries from db
+            question_query = Question.query.filter(
+                Question.category == quiz_category)
+
+            for prev_question in previous_questions:
+                question_query = question_query.filter(
+                    Question.question != prev_question)
+
+            filtered_questions = question_query.all()
+            list_of_filtered_questions = [
+                question.format() for question in filtered_questions]
+
+            print(list_of_filtered_questions)
+
+            next_question = None
+
+            number_of_questions = len(list_of_filtered_questions)
+
+            if number_of_questions > 0:
+                next_question = list_of_filtered_questions[random.randint(
+                    0, number_of_questions-1)]
+
+            response_object = {
+                "success": True,
+                "question": next_question
+            }
+
+            return jsonify(response_object)
+
+        except ValidationError:
+            abort(400)
+
+        except:
+            db.session.rollback()
+            print(sys.exc_info())
+            abort(500)
+
+        finally:
+            db.session.close()
 
     """
     @TODO: 
