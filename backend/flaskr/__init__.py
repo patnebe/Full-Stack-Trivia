@@ -14,14 +14,14 @@ QUESTIONS_PER_PAGE = 10
 
 
 def get_categories():
-    categories = db.session.query(Category.type).all()
+    categories = Category.query.all()
 
-    list_of_categories = []
+    hash_table_of_categories = {}
 
     for category in categories:
-        list_of_categories.append(category[0])
+        hash_table_of_categories[category.id] = category.type
 
-    return list_of_categories
+    return hash_table_of_categories
 
 
 class question_schema(Schema):
@@ -32,8 +32,8 @@ class question_schema(Schema):
 
 
 class quiz_request_schema(Schema):
-    previous_questions = fields.List(fields.String())
-    quiz_category = fields.Int()
+    previous_questions = fields.List(fields.Int())
+    quiz_category = fields.Dict(keys=fields.String(), values=fields.Inferred())
 
 
 def create_app(test_config=None):
@@ -66,12 +66,12 @@ def create_app(test_config=None):
     @app.route('/v1/categories')
     def get_available_categories():
         try:
-            list_of_categories = get_categories()
+            categories = get_categories()
 
             response_object = {
                 "success": True,
-                "categories": list_of_categories,
-                "number_of_categories": len(list_of_categories)
+                "categories": categories,
+                "number_of_categories": len(categories)
             }
 
             return jsonify(response_object)
@@ -234,6 +234,7 @@ def create_app(test_config=None):
         try:
             request_payload = request.get_json()
             search_query = request_payload['searchTerm']
+            print(request_payload)
 
             search_results = Question.query.filter(
                 Question.question.ilike(f"%{search_query}%")).all()
@@ -317,10 +318,11 @@ def create_app(test_config=None):
     def get_questions_for_quiz():
         try:
             request_payload = request.get_json()
+            print(request_payload)
             input_is_valid = quiz_request_schema().load(request_payload)
 
             previous_questions = request_payload['previous_questions']
-            quiz_category = request_payload['quiz_category']
+            quiz_category = request_payload['quiz_category']['id']
 
             # find out how to exclude queries from db
             question_query = Question.query.filter(
@@ -328,7 +330,7 @@ def create_app(test_config=None):
 
             for prev_question in previous_questions:
                 question_query = question_query.filter(
-                    Question.question != prev_question)
+                    Question.id != prev_question)
 
             filtered_questions = question_query.all()
             list_of_filtered_questions = [

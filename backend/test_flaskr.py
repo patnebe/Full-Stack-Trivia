@@ -41,7 +41,7 @@ class TriviaTestCase(unittest.TestCase):
 
         self.assertEqual(response_object.status_code, 200)
         self.assertTrue(response_data['success'])
-        self.assertEqual(type(response_data['categories']), list)
+        self.assertEqual(type(response_data['categories']), dict)
         self.assertEqual(type(response_data['number_of_categories']), int)
 
     def test_success_get_paginated_questions(self):
@@ -58,7 +58,7 @@ class TriviaTestCase(unittest.TestCase):
 
         self.assertEqual(type(response_data['total_questions']), int)
 
-        self.assertEqual(type(response_data['categories']), list)
+        self.assertEqual(type(response_data['categories']), dict)
         pass
 
     def test_404_get_paginated_questions(self):
@@ -219,14 +219,14 @@ class TriviaTestCase(unittest.TestCase):
         no_of_categories = len(list_of_categories)
 
         category = list_of_categories[random.randint(
-            0, no_of_categories-1)]['id']
+            0, no_of_categories-1)]
 
         # create a list of previous questions from the given category
         query_result = Question.query.filter(
-            Question.category == category).limit(3).all()
+            Question.category == category['id']).limit(3).all()
 
         list_of_previous_questions = [
-            question.format()['question'] for question in query_result]
+            question.format()['id'] for question in query_result]
 
         payload = {"previous_questions": list_of_previous_questions,
                    "quiz_category": category}
@@ -245,9 +245,10 @@ class TriviaTestCase(unittest.TestCase):
             # also make sure that it falls within the right category
             for question in list_of_previous_questions:
                 self.assertNotEqual(
-                    question, question_from_endpoint['question'])
+                    question, question_from_endpoint['id'])
 
-            self.assertEqual(category, question_from_endpoint['category'])
+            self.assertEqual(
+                category['id'], question_from_endpoint['category'])
 
         pass
 
