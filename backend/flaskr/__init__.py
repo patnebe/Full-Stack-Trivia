@@ -10,10 +10,20 @@ from models import setup_db, Question, Category, db
 
 from marshmallow import Schema, fields, ValidationError
 
+# A global variable stating how many questions to be returned per page during pagination
 QUESTIONS_PER_PAGE = 10
 
 
 def get_categories():
+    """
+    A helper function which returns a dictionary of categories in which the keys are the ids and the value is the corresponding string of the category.
+
+    Args: 
+        None
+
+    Returns:
+            A hash table of categories where each key:value pair represents the category id and the category type respectively.
+    """
     categories = Category.query.all()
 
     hash_table_of_categories = {}
@@ -24,7 +34,30 @@ def get_categories():
     return hash_table_of_categories
 
 
+def get_paginated_questions():
+    """
+    A helper function which makes a paginated query to the Question table and returns the apropriate number of questions.
+
+    Args:
+        None
+
+    Returns:
+        questions: A list of objects which are instances of the 'Question' class/data model.
+    """
+    start = request.args.get('page', 1, type=int)
+
+    questions = Question.query.paginate(
+        start, QUESTIONS_PER_PAGE, False).items
+
+    return questions
+
+
 class question_schema(Schema):
+    """
+    A marshmallow schema which validates the JSON payload accompanying POST requests to create new trivia questions.
+
+    See https://marshmallow.readthedocs.io/en/stable/ for more info.
+    """
     question = fields.String()
     answer = fields.String()
     category = fields.Int()
@@ -32,6 +65,11 @@ class question_schema(Schema):
 
 
 class quiz_request_schema(Schema):
+    """
+    A marshmallow schema which validates the JSON payload accompanying POST requests to get the next question during the trivia quiz.
+
+    See https://marshmallow.readthedocs.io/en/stable/ for more info.
+    """
     previous_questions = fields.List(fields.Int())
     quiz_category = fields.Dict(keys=fields.String(), values=fields.Inferred())
 
@@ -41,30 +79,43 @@ def create_app(test_config=None):
     app = Flask(__name__)
     setup_db(app)
 
-    """
-    @TODO: Set up CORS. Allow '*' for origins. Delete the sample route after completing the TODOs
-    """
     cors = CORS(app, resources={r"/v1/*": {"origins": "*"}})
 
-    """
-    @TODO: Use the after_request decorator to set Access-Control-Allow
-    """
     @app.after_request
     def after_request(response):
+        """
+        Returns the response object after modifying it to add Access-Control headers after each request
+        """
         response.headers.add('Access-Control-Allow-Headers',
                              'Content-Type, Authorization, true')
         response.headers.add('Access-Control-Allow-Methods',
                              'GET, PATCH, POST, DELETE, OPTIONS')
         return response
 
-    """
-    @TODO: 
-    Create an endpoint to handle GET requests 
-    for all available categories.
-    """
-
     @app.route('/v1/categories')
     def get_available_categories():
+        """
+        Fetches a dictionary of categories in which the keys are the ids and the value is the corresponding string of the category
+
+        Methods: ['GET']
+
+        Request Parameters: None
+
+        Returns: A JSON object which includes a key, categories, that contains an object of id: category_string key:value pairs. 
+
+        Sample response: {
+            "success": true,
+            "categories": {
+                '1' : "Science",
+                '2' : "Art",
+                '3' : "Geography",
+                '4' : "History",
+                '5' : "Entertainment",
+                '6' : "Sports"
+            },
+            "number_of_categories": 6
+        }
+        """
         try:
             categories = get_categories()
 
@@ -84,29 +135,46 @@ def create_app(test_config=None):
         finally:
             db.session.close()
 
-    """
-    @TODO: 
-    Create an endpoint to handle GET requests for questions, 
-    including pagination (every 10 questions). 
-    This endpoint should return a list of questions, 
-    number of total questions, current category, categories. 
-
-    TEST: At this point, when you start the application
-    you should see questions and categories generated,
-    ten questions per page and pagination at the bottom of the screen for three pages.
-    Clicking on the page numbers should update the questions. 
-    """
-
     @app.route('/v1/questions')
     def get_all_questions():
-        def get_paginated_questions():
-            start = request.args.get('page', 1, type=int)
+        """
+        Fetches a list of questions in which each question is represented by a dictionary. 
 
-            questions = Question.query.paginate(
-                start, QUESTIONS_PER_PAGE, False).items
+        Methods: ['GET']
 
-            return questions
+        Request Parameters: (Optional, default is 1) An integer representing the starting page, where each page contains a given number (defined as a global variable in the app) of number questions.
 
+        Returns: A JSON object which includes a key, questions, that points to a list of dictionaries representing different questions. 
+
+        Sample response: {
+            "success": true,
+            "questions": [
+                {
+                    "id": 1,
+                    "question": "Who built this API?",
+                    "answer": "Dev-Nebe",
+                    "category": 1,
+                    "difficulty": 2
+                },
+                {
+                    "id": 2,
+                    "question": "What programming language was this API built in?",
+                    "answer": "Python",
+                    "category": 1,
+                    "difficulty": 2
+                }]
+            "total_questions": 2,
+            "categories": {
+                '1' : "Science",
+                '2' : "Art",
+                '3' : "Geography",
+                '4' : "History",
+                '5' : "Entertainment",
+                '6' : "Sports"
+            },
+            "current_category": None
+        }
+        """
         try:
             questions = get_paginated_questions()
 
@@ -137,17 +205,22 @@ def create_app(test_config=None):
         finally:
             db.session.close()
 
-    """
-    @TODO: 
-    Create an endpoint to DELETE question using a question ID. 
-
-    TEST: When you click the trash icon next to a question, the question will be removed.
-    This removal will persist in the database and when you refresh the page. 
-    """
-
     @app.route('/v1/questions/<int:question_id>', methods=['DELETE'])
     def delete_question(question_id):
+        """
+        Deletes a question with the specified ID. 
 
+        Methods: ['DELETE']
+
+        Request Parameters: None
+
+        Returns: A JSON object which includes a key - message - indicating that the question was deleted successfully. 
+
+        Sample response: {
+            "success": true,
+            "message": "The question with ID: 1 was successfully deleted"
+        }
+        """
         try:
             question_to_be_deleted = Question.query.get(question_id)
 
@@ -172,18 +245,31 @@ def create_app(test_config=None):
         finally:
             db.session.close()
 
-    """
-    @TODO: 
-    Create an endpoint to POST a new question, 
-    which will require the question and answer text, 
-    category, and difficulty score.
-
-    TEST: When you submit a question on the "Add" tab, 
-    the form will clear and the question will appear at the end of the last page
-    of the questions list in the "List" tab. 
-    """
     @app.route('/v1/questions', methods=['POST'])
     def post_new_question():
+        """
+        Stores a new question in the database.
+
+        Methods: ['POST']
+
+        Request Parameters: None
+
+        Request Data: A JSON object containing the following keys - question, answer, category, and difficulty. The values associated with these keys should be of type string, string, int, and int respectively.
+
+        Sample request data: {
+            "question": "What was Cassius Clay known as?",
+            "answer": "Muhammad Ali",
+            "category": 1,
+            "difficulty": 4
+        } 
+
+        Returns: A JSON object which includes a key - message - indicating that the question was successfully added to the database. 
+
+        Sample response: {
+            "success": true,
+            "message": "The question: 'What was Cassius Clay known as?' was successfully added to the Trivia"
+        }
+        """
         try:
             request_payload = request.get_json()
             # This next line validates the the properties of the JSON input and raises a ValidationError exception if the input data is not properly formatted.
@@ -202,7 +288,7 @@ def create_app(test_config=None):
 
             response_object = {
                 "success": True,
-                "message": f"The question: {question} has been stored in the database."
+                "message": f"The question: '{question}' has been added to the Trivia"
             }
 
             return jsonify(response_object)
@@ -219,22 +305,48 @@ def create_app(test_config=None):
         finally:
             db.session.close()
 
-    """
-    @TODO:
-    Create a POST endpoint to get questions based on a search term.
-    It should return any questions for whom the search term
-    is a substring of the question.
-
-    TEST: Search by any phrase. The questions list will update to include
-    only question that include that string within their question.
-    Try using the word "title" to start.
-    """
     @app.route('/v1/questions/search', methods=['POST'])
     def search_questions():
+        """
+        Searches for a question in the database.
+
+        Methods: ['POST']
+
+        Request Parameters: None
+
+        Request Data: A JSON object containing a single key: value pair. The key is 'searchTerm' and the value contains the search_query
+
+        Sample request data: {
+            "searchTerm": "soccer"
+        } 
+
+        Returns: A JSON object which includes a key - questions - that points to a list of questions where each question is represented by a dictionary. 
+
+        Sample response: {
+            'success': True,
+            'questions': [
+                {
+                    'id': 10,
+                    'question': 'Which is the only team to play in every soccer World Cup tournament?',
+                    'answer': 'Brazil',
+                    'category': 6,
+                    'difficulty': 3
+                },
+                {
+                    'id': 11,
+                    'question': 'Which country won the first ever soccer World Cup in 1930?',
+                    'answer': 'Uruguay',
+                    'category': 6,
+                    'difficulty': 4
+                }
+            ],
+            'current_category': None,
+            'total_questions': 2
+        }
+        """
         try:
             request_payload = request.get_json()
             search_query = request_payload['searchTerm']
-            print(request_payload)
 
             search_results = Question.query.filter(
                 Question.question.ilike(f"%{search_query}%")).all()
@@ -262,16 +374,32 @@ def create_app(test_config=None):
         finally:
             db.session.close()
 
-    """
-    @TODO:
-    Create a GET endpoint to get questions based on category.
-
-    TEST: In the "List" tab / main screen, clicking on one of the
-    categories in the left column will cause only questions of that
-    category to be shown.
-    """
     @app.route('/v1/categories/<int:category_id>/questions')
     def get_questions_by_category(category_id):
+        """
+        Returns a list of all the questions available for a given category.
+
+        Methods: ['GET']
+
+        Request Parameters: None
+
+        Returns: A JSON object which includes a key - questions - that points to a list of questions for the requested category. Each question is represented by a dictionary. 
+
+        Sample response: {
+            'success': True,
+            'questions': [
+                {
+                    'id': 10,
+                    'question': 'Which is the only team to play in every soccer World Cup tournament?',
+                    'answer': 'Brazil',
+                    'category': 6,
+                    'difficulty': 3
+                }
+            ],
+            'total_questions': 1,
+            'current_category': 6
+        }
+        """
         try:
             current_category = Category.query.get(category_id)
 
@@ -303,22 +431,39 @@ def create_app(test_config=None):
         finally:
             db.session.close()
 
-    """
-    @TODO:
-    Create a POST endpoint to get questions to play the quiz.
-    This endpoint should take category and previous question parameters
-    and return a random questions within the given category,
-    if provided, and that is not one of the previous questions.
-
-    TEST: In the "Play" tab, after a user selects "All" or a category,
-    one question at a time is displayed, the user is allowed to answer
-    and shown whether they were correct or not.
-    """
     @app.route('/v1/quizzes', methods=['POST'])
     def get_questions_for_quiz():
+        """
+        Returns a random question for the quiz, within the given category, that is not contained in the list of previous questions.
+
+        Methods: ['POST']
+
+        Request Parameters: None
+
+        Request Data: A JSON object containing the following keys - previous_questions, quiz_category. The values associated with these keys should be a list of question IDs and an integer representing the current category, respectively.
+
+        Sample request data: {
+            "previous_questions": [1,18,5],
+            "quiz_category": 1,
+        } 
+
+        Returns: A JSON object which includes a key - questions - that points to a list of questions for the requested category. Each question is represented by a dictionary. 
+
+        Sample response: {
+            'success': True,
+            'question': [
+                {
+                    'id': 10,
+                    'question': 'Which is the only team to play in every soccer World Cup tournament?',
+                    'answer': 'Brazil',
+                    'category': 6,
+                    'difficulty': 3
+                }
+            ]
+        }
+        """
         try:
             request_payload = request.get_json()
-            print(request_payload)
             input_is_valid = quiz_request_schema().load(request_payload)
 
             previous_questions = request_payload['previous_questions']
@@ -335,8 +480,6 @@ def create_app(test_config=None):
             filtered_questions = question_query.all()
             list_of_filtered_questions = [
                 question.format() for question in filtered_questions]
-
-            print(list_of_filtered_questions)
 
             next_question = None
 
@@ -364,11 +507,6 @@ def create_app(test_config=None):
         finally:
             db.session.close()
 
-    """
-    @TODO: 
-    Create error handlers for all expected errors 
-    including 404 and 422. 
-    """
     @app.errorhandler(400)
     def bad_request(error):
         return jsonify({
