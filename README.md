@@ -12,7 +12,7 @@ My task was to finish the trivia app so they can start holding trivia and seeing
 4. Search for questions based on a text query string.
 5. Play the quiz game, randomizing either all questions or within a specific category.
 
-Completing this trivia app gave me the ability to structure plan, implement, and test an API server in a professional manner.
+Completing this trivia app improved my skills in structuring, planning, implementing, and testing an API server in a professional manner.
 
 ## Tech Stack
 
