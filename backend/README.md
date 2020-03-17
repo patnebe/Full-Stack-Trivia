@@ -6,7 +6,7 @@
 
 #### Python 3.7
 
-Follow instructions to install the latest version of python for your platform in the [python docs](https://docs.python.org/3/using/unix.html#getting-and-installing-the-latest-version-of-python)
+Follow instructions to install the latest version of python for your platform in the [python docs](https://docs.python.org/3/using/unix.html#getting-and-installing-the-latest-version-of-python). Python 3.7 is the recommended version for this project.
 
 #### Virtual Enviornment
 
@@ -24,14 +24,16 @@ This will install all of the required packages we selected within the `requireme
 
 ##### Key Dependencies
 
-- [Flask](http://flask.pocoo.org/)  is a lightweight backend microservices framework. Flask is required to handle requests and responses.
+- [Flask](http://flask.pocoo.org/) is a lightweight backend microservices framework. Flask is required to handle requests and responses.
 
-- [SQLAlchemy](https://www.sqlalchemy.org/) is the Python SQL toolkit and ORM we'll use handle the lightweight sqlite database. You'll primarily work in app.py and can reference models.py. 
+- [SQLAlchemy](https://www.sqlalchemy.org/) is the Python SQL toolkit and ORM used for handling the lightweight sqlite database.
 
-- [Flask-CORS](https://flask-cors.readthedocs.io/en/latest/#) is the extension we'll use to handle cross origin requests from our frontend server. 
+- [Flask-CORS](https://flask-cors.readthedocs.io/en/latest/#) is the extension used for handling cross origin requests from the frontend server.
 
 ## Database Setup
+
 With Postgres running, restore a database using the trivia.psql file provided. From the backend folder in terminal run:
+
 ```bash
 psql trivia < trivia.psql
 ```
@@ -50,48 +52,208 @@ flask run
 
 Setting the `FLASK_ENV` variable to `development` will detect file changes and restart the server automatically.
 
-Setting the `FLASK_APP` variable to `flaskr` directs flask to use the `flaskr` directory and the `__init__.py` file to find the application. 
+Setting the `FLASK_APP` variable to `flaskr` directs flask to use the `flaskr` directory and the `__init__.py` file to find the application.
 
-## Tasks
+## API Documentation
 
-One note before you delve into your tasks: for each endpoint you are expected to define the endpoint and response data. The frontend will be a plentiful resource because it is set up to expect certain endpoints and response data formats already. You should feel free to specify endpoints in your own way; if you do so, make sure to update the frontend or you will get some unexpected behavior. 
-
-1. Use Flask-CORS to enable cross-domain requests and set response headers. 
-2. Create an endpoint to handle GET requests for questions, including pagination (every 10 questions). This endpoint should return a list of questions, number of total questions, current category, categories. 
-3. Create an endpoint to handle GET requests for all available categories. 
-4. Create an endpoint to DELETE question using a question ID. 
-5. Create an endpoint to POST a new question, which will require the question and answer text, category, and difficulty score. 
-6. Create a POST endpoint to get questions based on category. 
-7. Create a POST endpoint to get questions based on a search term. It should return any questions for whom the search term is a substring of the question. 
-8. Create a POST endpoint to get questions to play the quiz. This endpoint should take category and previous question parameters and return a random questions within the given category, if provided, and that is not one of the previous questions. 
-9. Create error handlers for all expected errors including 400, 404, 422 and 500. 
-
-REVIEW_COMMENT
 ```
-This README is missing documentation of your endpoints. Below is an example for your endpoint to get all categories. Please use it as a reference for creating your documentation and resubmit your code. 
-
 Endpoints
-GET '/categories'
-GET ...
-POST ...
-DELETE ...
+
+GET '/v1/categories'
+GET '/v1/questions'
+DELETE '/v1/questions/<int:questions_id>'
+POST '/v1/questions'
+POST '/v1/questions/search'
+GET '/v1/categories/<int:category_id>/questions'
+POST '/V1/quizzes'
+
 
 GET '/categories'
 - Fetches a dictionary of categories in which the keys are the ids and the value is the corresponding string of the category
-- Request Arguments: None
-- Returns: An object with a single key, categories, that contains a object of id: category_string key:value pairs. 
-{'1' : "Science",
-'2' : "Art",
-'3' : "Geography",
-'4' : "History",
-'5' : "Entertainment",
-'6' : "Sports"}
 
+- Methods: ['GET']
+
+- Request Parameters: None
+
+- Returns: A JSON object which includes a key, categories, that contains an object of id: category_string key:value pairs.
+
+- Sample response: {
+    "success": true,
+    "categories": {
+        '1' : "Science",
+        '2' : "Art",
+        '3' : "Geography",
+        '4' : "History",
+        '5' : "Entertainment",
+        '6' : "Sports"
+    },
+    "number_of_categories": 6
+}
+
+
+GET '/v1/questions'
+- Fetches a list of questions in which each question is represented by a dictionary.
+
+- Request Parameters: (Optional, default is 1) An integer representing the starting page, where each page contains a given number (defined as a global variable in the app) of number questions.
+
+- Returns: A JSON object which includes a key, questions, that points to a list of dictionaries representing different questions.
+
+- Sample response: {
+    "success": true,
+    "questions": [
+        {
+            "id": 1,
+            "question": "Who built this API?",
+            "answer": "Dev-Nebe",
+            "category": 1,
+            "difficulty": 2
+        },
+        {
+            "id": 2,
+            "question": "What programming language was this API built in?",
+            "answer": "Python",
+            "category": 1,
+            "difficulty": 2
+        }]
+    "total_questions": 2,
+    "categories": {
+        '1' : "Science",
+        '2' : "Art",
+        '3' : "Geography",
+        '4' : "History",
+        '5' : "Entertainment",
+        '6' : "Sports"
+    },
+    "current_category": None
+}
+
+
+DELETE '/v1/questions/<int:questions_id>'
+- Deletes a question with the specified ID.
+
+- Request Parameters: None
+
+- Returns: A JSON object which includes a key - message - indicating that the question was deleted successfully.
+
+- Sample response: {
+    "success": true,
+    "message": "The question with ID: 1 was successfully deleted"
+}
+
+
+POST '/v1/questions'
+- Stores a new question in the database.
+
+- Request Parameters: None
+
+- Request Data: A JSON object containing the following keys - question, answer, category, and difficulty. The values associated with these keys should be of type string, string, int, and int respectively.
+
+- Sample request data: {
+    "question": "What was Cassius Clay known as?",
+    "answer": "Muhammad Ali",
+    "category": 1,
+    "difficulty": 4
+}
+
+- Returns: A JSON object which includes a key - message - indicating that the question was successfully added to the database.
+
+- Sample response: {
+    "success": true,
+    "message": "The question: 'What was Cassius Clay known as?' was successfully added to the Trivia"
+}
+
+
+POST '/v1/questions/search'
+- Searches for a question in the database.
+
+- Methods: ['POST']
+
+- Request Data: A JSON object containing a single key: value pair. The key is 'searchTerm' and the value contains the search_query
+
+- Sample request data: {
+    "searchTerm": "soccer"
+}
+
+- Returns: A JSON object which includes a key - questions - that points to a list of questions where each question is represented by a dictionary.
+
+- Sample response: {
+    'success': True,
+    'questions': [
+        {
+            'id': 10,
+            'question': 'Which is the only team to play in every soccer World Cup tournament?',
+            'answer': 'Brazil',
+            'category': 6,
+            'difficulty': 3
+        },
+        {
+            'id': 11,
+            'question': 'Which country won the first ever soccer World Cup in 1930?',
+            'answer': 'Uruguay',
+            'category': 6,
+            'difficulty': 4
+        }
+    ],
+    'current_category': None,
+    'total_questions': 2
+}
+
+
+GET '/v1/categories/<int:category_id>/questions'
+- Returns a list of all the questions available for a given category.
+
+- Request Parameters: None
+
+- Returns: A JSON object which includes a key - questions - that points to a list of questions for the requested category. Each question is represented by a dictionary.
+
+- Sample response: {
+    'success': True,
+    'questions': [
+        {
+            'id': 10,
+            'question': 'Which is the only team to play in every soccer World Cup tournament?',
+            'answer': 'Brazil',
+            'category': 6,
+            'difficulty': 3
+        }
+    ],
+    'total_questions': 1,
+    'current_category': 6
+}
+
+
+POST '/V1/quizzes'
+- Returns a random question for the quiz, within the given category, that is not contained in the list of previous questions.
+
+- Request Parameters: None
+
+- Request Data: A JSON object containing the following keys - previous_questions, quiz_category. The values associated with these keys should be a list of question IDs and an integer representing the current category, respectively.
+
+- Sample request data: {
+    "previous_questions": [1,18,5],
+    "quiz_category": 1,
+}
+
+- Returns: A JSON object which includes a key - questions - that points to a list of questions for the requested category. Each question is represented by a dictionary.
+
+- Sample response: {
+    'success': True,
+    'question': [
+        {
+            'id': 10,
+            'question': 'Which is the only team to play in every soccer World Cup tournament?',
+            'answer': 'Brazil',
+            'category': 6,
+            'difficulty': 3
+        }
+    ]
+}
 ```
 
-
 ## Testing
+
 To run the tests, run
+
 ```
 dropdb trivia_test
 createdb trivia_test
