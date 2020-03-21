@@ -18,12 +18,12 @@ Completing this trivia app improved my skills in structuring, planning, implemen
 
 ### Backend
 
-The `./backend` directory contains a completed Flask, PostgreSQL and SQLAlchemy server. The README.md file in that directory also contains the documentation for the API endpoints.
+The `./backend` directory contains a completed Flask, PostgreSQL and an SQLAlchemy server hosted on Heroku. The README.md file in that directory also contains the documentation for the API endpoints.
 
 [View the README.md within ./backend for more details.](./backend/README.md)
 
 ### Frontend
 
-The `./frontend` directory contains a complete React frontend to consume the data from the Flask server.
+The `./frontend` directory contains a complete React frontend, hosted on Netlify, to consume the data from the Flask server.
 
 [View the README.md within ./frontend for more details.](./frontend/README.md)
