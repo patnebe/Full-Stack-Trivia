@@ -22,7 +22,7 @@ class QuizView extends Component {
 
   componentDidMount() {
     $.ajax({
-      url: `v1/categories`, //TODO: update request URL
+      url: `https://full-stack-trivia.herokuapp.com/v1/categories`, //TODO: update request URL
       type: "GET",
       success: result => {
         this.setState({ categories: result.categories });
@@ -55,7 +55,7 @@ class QuizView extends Component {
     // }));
 
     $.ajax({
-      url: "v1/quizzes", //TODO: update request URL
+      url: "https://full-stack-trivia.herokuapp.com/v1/quizzes", //TODO: update request URL
       type: "POST",
       dataType: "json",
       contentType: "application/json",
@@ -63,9 +63,6 @@ class QuizView extends Component {
         previous_questions: previousQuestions,
         quiz_category: this.state.quizCategory
       }),
-      xhrFields: {
-        withCredentials: true
-      },
       crossDomain: true,
       success: result => {
         this.setState({
